@@ -1,0 +1,10 @@
+[Unit]
+Description=Disables CPU core boost feature
+After=multi-user.target suspend.target 
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/coreboost.sh
+
+[Install]
+WantedBy=multi-user.target sleep.target
