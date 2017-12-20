@@ -14,3 +14,11 @@ To install run the installer script, `sudo install.sh`, from the `coreboost/` di
 Just run the uninstaller script, `sudo uninstall.sh`, from the `coreboost/` directory.
 
 On next restart/resume the turbo boost will be re-enabled again.
+
+#### Dependencies
+
+Requires [MSR tools](https://01.org/msr-tools). In Arch it can be installed with
+`yaourt -S msr-tools` from the AUR repositories 
+(if you have [Yaourt](https://github.com/archlinuxfr/yaourt)).
+
+On other distros you'll have to look for it.
