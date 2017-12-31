@@ -1,3 +1,4 @@
+#!/bin/bash
 sudo systemctl stop coreboost.service
 sudo systemctl disable coreboost.service
 sudo rm /usr/local/bin/coreboost.sh

@@ -1,3 +1,4 @@
+#!/bin/bash
 sudo cp coreboost.sh /usr/local/bin/
 sudo cp coreboost.service /etc/systemd/system/
 sudo chmod 744 /usr/local/bin/coreboost.sh
