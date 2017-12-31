@@ -15,7 +15,7 @@ Use as long as the vanilla release breaks brightness control on the MacBook Pro 
 #### NVIDIA GPU Fan Speed (`nvfan`)
 
 Controls the speed of an NVIDIA GFX card's fans in the background using a script.
-See the [readme](nvidia-gpu-fan-speed/README.md) for more details.
+See the [readme](nvfan/README.md) for more details.
 
 ## Licence
 
