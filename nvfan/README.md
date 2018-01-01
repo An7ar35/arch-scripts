@@ -1,5 +1,7 @@
 # NVIDIA GPU Fan Speed `nvfan`
 
+<span style="color:blue">__Only use this if you know what you are doing!__</span>
+
 This is a script adapted from Artem S. Tashkinov's own and awesome adaptive fan speed management 
 for NVIDIA GPUs on Linux script.
 
@@ -8,30 +10,6 @@ I've modified the temperature/fan speed values for a more aggressive profile.
 This is perfect for keeping your GFX card cool when playing games or doing other GPU intensive 
 tasks on Linux.
 
-__Only use this if you know what you are doing!__
-
-#### Usage
-
-//TODO
-
-#### Modiying fan speed steps and polling time
-
-Edit the [`nvfan.sh`](nvfan.sh) script prior to installing 
-and look for the `polltime` and `range`/`speed` sections.
-
-For example the following settings would set the fan speed to 0% between 0-29°C, 50% between 
-30-79°C and 100% between 80-200°C.
-> range[0]="0 29"  
-> speed[0]=0  
-> range[0]="30 79"  
-> speed[0]=50  
-> range[0]="80 200"  
-> speed[0]=100
-
-With bad settings you can fry your card so be careful and always keep an eye
-on ou GPU temps (desktop monitor with warnings/critical temp. shutdown safety 
-is a good idea).
-
 #### Installing
 
 To install run the installer script, `sudo install.sh`, from the `nvfan/` directory.
@@ -39,6 +17,43 @@ To install run the installer script, `sudo install.sh`, from the `nvfan/` direct
 #### Uninstalling
 
 Just run the uninstaller script, `sudo uninstall.sh`, from the `nvfan/` directory.
+
+#### Usage
+
+
+    Options:
+       -a  Start the automatic fan speed controller process based on the presets.
+       -h  Usage help.
+       -k  Kills the fan controller process and resets to NVIDIA's own fan management
+       -s  Manually set speed of fan <% fan speed>. Kills the auto fan speed process.
+       -r  Reset the GPU fan management script. (Kills old process and reloads 'nvfan.conf')
+
+//TODO
+
+#### Settings
+
+Settings can be configured in the `~/.config/nvfan/nvfan.conf` file.
+
+Logging to `journalctl` can be switched on with:
+> `Log=1`
+
+Polling time can be changed with: `PollingTime=t` where `t` is the refresh rate in seconds. 
+For example: 
+> `PollingTime=2`
+
+Fan speeds on temperature ranges can be set as such: `Speed(s)=f,c` where `s` is the % speed of the 
+fan at temperature range from `f` to `c`°C. For example:
+> ```
+> Speed(0)=0,29  
+> Speed(50)=30,40
+> Speed(70)=41,50
+> Speed(85)=51,58
+> Speed(100)=59,200
+> ```
+
+_With bad settings you can fry your card so be careful and always keep an eye
+on ou GPU temps (desktop monitor with warnings/critical temp. shutdown safety 
+is a good idea)._
 
 #### Dependencies
 
