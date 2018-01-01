@@ -106,7 +106,7 @@ sendToLog() {
 # @param $2 message                                     #
 #########################################################
 logMsg() {
-    if (("${DEFAULT_LOG}" == 1)); then
+    if [ "${log}" = 1 ]; then
         sendToLog "${@:1:2}"
     else
         printMsg "${@:1:2}"
@@ -285,7 +285,7 @@ reset() {
 #####################################
 setCustomSpeed() {
     temp=`nvidia-settings -q GPUCoreTemp -t | head -1`
-    logMsg 3 "[GPU: ${temp}°C] Setting GPU fan speed to $1%."
+    logMsg 3 "[GPU: ${temp}°C] Setting GPU fan speed to $1%%."
     nvidia-settings -a "[gpu:0]/GPUFanControlState=1" -a "[fan:0]/GPUTargetFanSpeed=$1" &> /dev/null
 }
 
@@ -297,22 +297,22 @@ startPresetController() {
         temp=`nvidia-settings -q GPUCoreTemp -t | head -1`
 
         i=0
-        while [ "x${DEFAULT_RANGE[i]}" != "x" ]; do
-            read lo hi <<<$(echo ${DEFAULT_RANGE[$i]})
+        while [ "x${range[i]}" != "x" ]; do
+            read lo hi <<<$(echo ${range[$i]})
 
             if [ $temp -ge $lo -a $temp -le $hi ]; then
 
-                if (("${DEFAULT_LOG}" == 1)); then
-                    sendToLog 3 "[GPU: ${temp}°C] Setting Fan speed to ${DEFAULT_SPEED[$i]}% using preset values."
+                if (("${log}" == 1)); then
+                    sendToLog 3 "[GPU: ${temp}°C] Setting Fan speed to ${speed[$i]}% using preset values."
                 fi
 
-                nvidia-settings -a "[gpu:0]/GPUFanControlState=1" -a "[fan:0]/GPUTargetFanSpeed=${DEFAULT_SPEED[$i]}" &> /dev/null
+                nvidia-settings -a "[gpu:0]/GPUFanControlState=1" -a "[fan:0]/GPUTargetFanSpeed=${speed[$i]}" &> /dev/null
             fi
 
             i=$((i+1))
         done
 
-        sleep ${DEFAULT_REFRESH}
+        sleep ${refresh}
     done
 }
 
