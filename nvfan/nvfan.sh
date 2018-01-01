@@ -2,7 +2,7 @@
 #--------------------------------------# Default Settings #----------------------------------------#
 #---- DO NOT CHANGE THOSE SETTINGS. CUSTOM SETTINGS SHOULD BE CHANGED IN THE 'nvfan.conf' FILE ----#
 #--------------------------------------------------------------------------------------------------#
-readonly DEFAULT_LOG=1          # Logger flag. When 1, every call is logged to journalctl
+readonly DEFAULT_LOG=0          # Logger flag. When 1, every call is logged to journalctl
 readonly DEFAULT_REFRESH=2      # Number of seconds between updates
 declare -a DEFAULT_RANGE        # DEFAULT_RANGE[i]: Temperature range 'i'
 declare -a DEFAULT_SPEED        # DEFAULT_SPEED[i]: Speed of fans (%) on DEFAULT_RANGE 'i'
@@ -69,7 +69,7 @@ usage () {
 #           - 2 = warning,                              #
 #           - 3 = info-exec,                            #
 #           - 4 = info-ok,                              #
-#           - 5 = info-kill)                            #
+#           - 5 = info-kill                             #
 # @param $2 message                                     #
 #########################################################
 printMsg() {
@@ -149,7 +149,7 @@ getValue() {
 }
 
 #################################
-# Checks if number              #
+# Checks if var is number       #
 # @param $1 Variable to check   #
 # @return "true"/"false"        #
 #################################
@@ -169,15 +169,9 @@ loadConfigFile() {
     # Load config file + strip '[',']','"' and replace with nothing, strip '-' and replace with a space
     file_contents=`awk -F\= '{gsub(/"|\[|\]/,"",$2);gsub(/\-/," ",$2);print $1 " " $2}' "$CONFIG_DIRECTORY/$CONFIG_FILE"`
 
-#    printf "\nFile content:\n${file_contents}\n"
-
     log_value=$( getValue "Log" "$file_contents")
     refresh_value=$( getValue "Refresh" "$file_contents")
     speed_values=`grep "Speed" <<< "${file_contents}" | sed 's|Speed ||'`
-
-#    printf "\nLog: ${log_value}\n"
-#    printf "\nRefresh: ${refresh_value}\n"
-#    printf "\nSpeeds:\n${speed_values}\n"
 
     # Check 'Log' value and assign
     if [ $( isNumber ${log_value} ) = "true" ] && [ ${log_value} -lt 2 ]; then
@@ -195,36 +189,52 @@ loadConfigFile() {
         logMsg 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): 'Refresh=${refresh_value}' - bad value, using default."
     fi
 
-    #Check 'Speed' values and assign
+    error_flag=false
+    #Check 'Speed' values and their associated temperature range and assign to local arrays
     while read line; do
         read s l h <<<$(echo ${line})
         if [ $( isNumber ${s} ) = "true" ] && [ $( isNumber ${l} ) = "true" ] && [ $( isNumber ${h} ) = "true" ]; then
             if [ ${l} -lt ${h} ]; then
-                printf "[OK] $s : $l to $h\n"
+                speed+=("$s")
+                range+=("$l $h")
             else
-                printf "[BAD] $s : $l to $h -> low temp is >= to high temp.\n"
+                error_flag=true
+                logMsg 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): [BAD] $s : $l to $h -> low temp is >= to high temp."
             fi
         else
-            printf "[BAD] $s : $l to $h -> invalid value(s)\n"
+            error_flag=true
+            logMsg 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): [BAD] $s : $l to $h -> invalid value(s)."
         fi
-        #speed
-        #range
     done <<< ${speed_values}
 
-
-    printf "\nInternal Log: ${log}\n"
-    printf "Internal Refresh: ${refresh}\n"
-    #printf "Internal Speeds:\n${speed_values}\n"
+    #Check error flag and load up default values for speed/range
+    if [ "$error_flag" = true ]; then
+        speed=()
+        range=()
+        sendToLog 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): Found problem(s) with Speed-Temp value(s) in config file. Fallen back on defaults."
+        printMsg 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): Found problem(s) with Speed-Temp value(s) in config file. Fallen back on defaults."
+        i=0
+        while [ "x${DEFAULT_RANGE[i]}" != "x" ]; do
+            read s <<<$(echo ${DEFAULT_SPEED[$i]})
+            read l h <<<$(echo ${DEFAULT_RANGE[$i]})
+            speed+=("$s")
+            range+=("$l $h")
+            i=$((i+1))
+        done
+    else
+        logMsg 4 "Speed-Temp.Range values successfully loaded from 'nvfan.conf'"
+    fi
 }
 
-
-
+#####################################
+# Checks config file exists         #
+# @return 0 (not found), 1 (exists) #
+#####################################
 checkConfigFile() {
-    echo "in checkConfig"
     if [ -d "$CONFIG_DIRECTORY" ] && [ -e "$CONFIG_DIRECTORY/$CONFIG_FILE" ]; then
-        echo "ok"
+        echo "true"
     else
-        echo "nok"
+        echo "false"
     fi
 }
 
@@ -306,22 +316,21 @@ startPresetController() {
     done
 }
 
-
 #---------------------------------------------# Main # --------------------------------------------#
 if checkGPU; then
     printMsg 1 "NVIDIA Fan speed management is not supported on this GPU."
     exit 1
 fi
 
-#createDefaultConfigFile
-#loadConfigFile
-#exit 0
-
-echo "Parent PID: $$"
+#echo "Current nvfan PID: $$"
 
 while getopts "ahs:r" opt; do
     case $opt in
         a)  killProcesses
+            if [ "$(checkConfigFile)" = "false" ]; then
+                createDefaultConfigFile
+            fi
+            loadConfigFile
             printMsg 3 "Starting auto fan speed based on presets..."
             startPresetController &
             exit 0
