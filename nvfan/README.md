@@ -20,13 +20,12 @@ Just run the uninstaller script, `sudo uninstall.sh`, from the `nvfan/` director
 
 #### Usage
 
-
     Options:
-       -a  Start the automatic fan speed controller process based on the presets.
+       -a  Start the automatic fan speed controller process based on the presets (will kill old 
+           processes and reloads 'nvfan.conf' if it was running previously).
        -h  Usage help.
-       -k  Kills the fan controller process and resets to NVIDIA's own fan management
        -s  Manually set speed of fan <% fan speed>. Kills the auto fan speed process.
-       -r  Reset the GPU fan management script. (Kills old process and reloads 'nvfan.conf')
+       -r  Kills the fan controller process and resets to NVIDIA's own fan management.
 
 //TODO
 
@@ -39,16 +38,16 @@ Logging to `journalctl` can be switched on with:
 
 Polling time can be changed with: `PollingTime=t` where `t` is the refresh rate in seconds. 
 For example: 
-> `PollingTime=2`
+> `Refresh=2`
 
-Fan speeds on temperature ranges can be set as such: `Speed(s)=f,c` where `s` is the % speed of the 
+Fan speeds on temperature ranges can be set as such: `Speed=s [f-c]` where `s` is the % speed of the 
 fan at temperature range from `f` to `c`°C. For example:
 > ```
-> Speed(0)=0,29  
-> Speed(50)=30,40
-> Speed(70)=41,50
-> Speed(85)=51,58
-> Speed(100)=59,200
+> Speed=0 [0-29]  
+> Speed=50 [30-40]  
+> Speed=70 [41-50]  
+> Speed=85 [51-58]  
+> Speed=100 [59-200]
 > ```
 
 _With bad settings you can fry your card so be careful and always keep an eye
