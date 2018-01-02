@@ -12,4 +12,4 @@ for core in $cores; do
     fi
 done
 
-echo "CPU Turbo boost disabled on ${disabled_counter}/${core_count} cores." | systemd-cat -t CoreBoost -p info
+echo "CPU Turbo boost disabled on ${disabled_counter}/${core_count} cores." | systemd-cat -t coreboost -p info
