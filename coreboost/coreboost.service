@@ -1,5 +1,5 @@
 [Unit]
-Description=Disables CPU core boost feature
+Description=Intel CPU Turbo-Boost disabler
 After=multi-user.target suspend.target 
 
 [Service]
