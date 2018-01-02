@@ -12,13 +12,21 @@ tasks on Linux.
 
 #### Installing
 
-To install run the installer script, `sudo install.sh`, from the `nvfan/` directory.
+To install run the installer script, `sudo install.sh`, from the `nvfan/` repository directory.
+
+The script will be installed in `/opt/nvfan/` and a symbolic link will be created in `usr/bin/` 
+so that, assuming your system has `/usr/bin/` in its `$PATH` environment, `nvfan` can be run from
+anywhere. 
+
+If you wish to have it run at startup, add an auto-start entry to your desktop environment.
 
 #### Uninstalling
 
-Just run the uninstaller script, `sudo uninstall.sh`, from the `nvfan/` directory.
+Just run the uninstaller script, `sudo uninstall.sh`, from the `nvfan/` repository directory.
 
 #### Usage
+
+Run `nvfan` from the console.
 
     Options:
        -a  Start the automatic fan speed controller process based on the presets (will kill old 
@@ -26,8 +34,6 @@ Just run the uninstaller script, `sudo uninstall.sh`, from the `nvfan/` director
        -h  Usage help.
        -s  Manually set speed of fan <% fan speed>. Kills the auto fan speed process.
        -r  Kills the fan controller process and resets to NVIDIA's own fan management.
-
-//TODO
 
 #### Settings
 

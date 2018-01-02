@@ -48,7 +48,7 @@ usage () {
     echo "    temperatures. Adapted from Artem S. Tashkinov's adaptive fan"
     echo "    speed management script."
     echo "  Usage:"
-    echo "    ./nvfan.sh [-a] [-h] [-k] [-s <% fan speed>]"
+    echo "    nvfan [-a] [-h] [-k] [-s <% fan speed>]"
     echo "  Options:"
     echo "    -a  Start the automatic fan speed controller process based on "
     echo "        the presets (will kill old processes and reloads 'nvfan.conf'"
