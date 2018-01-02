@@ -1,13 +1,16 @@
 # NVIDIA GPU Fan Speed `nvfan`
 
-<span style="color:blue">__Only use this if you know what you are doing!__</span>
-
 This is a script adapted from Artem S. Tashkinov's own and awesome adaptive fan speed management 
 for NVIDIA GPUs on Linux script.
 
-I've modified the temperature/fan speed values for a more aggressive profile.
+I've kept the update loop for the most part with a few tweak and added:
+1) An aggressive default temperature/fan speed profile, 
+2) External per-user configuration loading (.conf),
+3) Background process handling (kill/reset),
+4) Manual override of fan speed (be careful with that one),
+5) Installer/Uninstaller and global symbolic link to the script.
 
-This is perfect for keeping your GFX card cool when playing games or doing other GPU intensive 
+This works well for keeping your GFX card cool when playing games or doing other GPU intensive 
 tasks on Linux.
 
 #### Installing
@@ -62,7 +65,9 @@ is a good idea)._
 
 #### Dependencies
 
-Requires nvidia-settings (part of the __proprietary NVIDIA package__).
+Currently only support the proprietary NVIDIA linux driver (with `nvidia-settings`).
+ 
+At some point when I get some time I might add the 'Nouveau' driver support with some auto-detection. 
 
 #### Copyright
 
