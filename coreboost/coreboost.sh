@@ -28,9 +28,9 @@ printCoreStatus() {
     for core in ${cores}; do
         state=$(sudo rdmsr -p${core} 0x1a0 -f 38:38)
         if [[ $state -eq 1 ]]; then
-            echo "Core $1: disabled."
+            echo "Core ${core}: disabled."
         else
-            echo "Core $1: enabled."
+            echo "Core ${core}: enabled."
         fi
     done
 }
