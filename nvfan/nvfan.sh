@@ -15,19 +15,6 @@ readonly -a DEFAULT_SPEED
 readonly CONFIG_DIRECTORY="/home/$USER/.config/nvfan"
 readonly CONFIG_FILE="nvfan.conf"
 
-readonly GREEN='\033[0;32m'
-readonly BLUE='\033[1;34m'
-readonly YELLOW='\033[1;33m'
-readonly RED='\033[0;31m'
-readonly RESET='\033[0m' # reset colour
-
-readonly CRITICAL=${RED}'[Error]'${RESET}
-readonly ERROR=${RED}'[Error]'${RESET}
-readonly WARNING=${YELLOW}'[Warning]'${RESET}
-readonly OK=${GREEN}'(!)'${RESET}
-readonly EXEC=${BLUE}'(!)'${RESET}
-readonly KILL=${YELLOW}'(!)'${RESET}
-
 #----------------------------------------# Settings Vars #-----------------------------------------#
 declare -i log
 declare -i refresh
@@ -56,6 +43,7 @@ usage () {
     echo "    -h  Usage help."
     echo "    -s  Manually set speed of fan <% fan speed>. Kills the auto fan"
     echo "        speed process."
+    echo "    -t  Prints the current GPU temperature."
     echo "    -r  Kills the fan controller process and resets to NVIDIA's own"
     echo "        fan management.";
 }
@@ -74,13 +62,13 @@ usage () {
 #########################################################
 printMsg() {
 	case $1 in
-        0) printf "${CRITICAL} $2\n" >&2;;
-		1) printf "${ERROR} $2\n" >&2;;
-		2) printf "${WARNING} $2\n" >&2;;
-		3) printf "${EXEC} $2\n" >&2;;
-		4) printf "${OK} $2\n" >&2;;
-		5) printf "${KILL} $2\n" >&2;;
-		*) printf "$2\n" >&2;;
+        0) printf "\\033[0;31m[CRITICAL]\\033[0m %s\\n" "$2" >&2;;
+		1) printf "\\033[0;31m[ERROR]\\033[0m %s\\n" "$2" >&2;;
+		2) printf "\\033[1;33m[WARNING]\\033[0m %s\\n" "$2" >&2;;
+		3) printf "\\033[0;32m(!)\\033[0m %s\\n" "$2";;
+		4) printf "\\033[1;34m(!)\\033[0m %s\\n" "$2" >&2;;
+		5) printf "\\033[1;33m(!)\\033[0m %s\\n" "$2" >&2;;
+		*) printf "%s\\n" "$2" >&2;;
 	esac
 }
 
@@ -125,12 +113,12 @@ createDefaultConfigFile() {
         config="${CONFIG_DIRECTORY}/${CONFIG_FILE}"
         printMsg 3 "Creating config file '${config}' with default values..."
 
-        printf "Log=$DEFAULT_LOG\n" >> ${config}
-        printf "Refresh=$DEFAULT_REFRESH\n" >> ${config}
+        printf "Log=%s\\n" "$DEFAULT_LOG" >> "${config}"
+        printf "Refresh=%s\\n" "$DEFAULT_REFRESH" >> "${config}"
         i=0
-        while [ "x${DEFAULT_RANGE[i]}" != "x" ]; do
-            read l h <<<$(echo ${DEFAULT_RANGE[$i]})
-            printf "Speed=${DEFAULT_SPEED[$i]} [${l}-${h}]\n" >> ${config}
+        while [ "${DEFAULT_RANGE[i]}" != "" ]; do
+            read -r l h <<< "${DEFAULT_RANGE[$i]}"
+            printf "Speed=%s [%s-%s]\\n" "${DEFAULT_SPEED[$i]}" "${l}" "${h}" >> "${config}"
             i=$((i+1))
         done
     fi
@@ -143,9 +131,9 @@ createDefaultConfigFile() {
 # @return Value of key                              #
 #####################################################
 getValue() {
-    line=$(grep $1 <<< $2)
-    value=$(echo ${line} | awk -F' ' '{print $2}')
-    echo ${value}
+    line=$(grep "$1" <<< "$2")
+    value=$(echo "${line}" | awk -F' ' '{print $2}')
+    echo "${value}"
 }
 
 #################################
@@ -154,7 +142,7 @@ getValue() {
 # @return "true"/"false"        #
 #################################
 isNumber() {
-    if echo $1 | egrep -q '^[0-9]+$'; then
+    if echo "$1" | grep -E -q '^[0-9]+$'; then
         echo "true"
     else
         echo "false"
@@ -167,14 +155,14 @@ isNumber() {
 loadConfigFile() {
     printMsg 3 "Loading '$CONFIG_DIRECTORY/$CONFIG_FILE'..."
     # Load config file + strip '[',']','"' and replace with nothing, strip '-' and replace with a space
-    file_contents=`awk -F\= '{gsub(/"|\[|\]/,"",$2);gsub(/\-/," ",$2);print $1 " " $2}' "$CONFIG_DIRECTORY/$CONFIG_FILE"`
+    file_contents=$(awk -F= '{gsub(/"|\[|\]/,"",$2);gsub(/\-/," ",$2);print $1 " " $2}' "$CONFIG_DIRECTORY/$CONFIG_FILE")
 
     log_value=$( getValue "Log" "$file_contents")
     refresh_value=$( getValue "Refresh" "$file_contents")
-    speed_values=`grep "Speed" <<< "${file_contents}" | sed 's|Speed ||'`
+    speed_values=$(grep "Speed" <<< "${file_contents}" | sed 's|Speed ||')
 
     # Check 'Log' value and assign
-    if [ $( isNumber ${log_value} ) = "true" ] && [ ${log_value} -lt 2 ]; then
+    if [ "$(isNumber "${log_value}")" = "true" ] && [ "${log_value}" -lt 2 ]; then
         log=${log_value}
     else
         log=${DEFAULT_LOG}
@@ -182,7 +170,7 @@ loadConfigFile() {
     fi
 
     #Check 'Refresh' value and assign
-    if [ $( isNumber ${refresh_value} ) = "true" ] && [  ${refresh_value} -gt 0 ]; then
+    if [ "$(isNumber "${refresh_value}")" = "true" ] && [ "${refresh_value}" -gt 0 ]; then
         refresh=${refresh_value}
     else
         refresh=${DEFAULT_REFRESH}
@@ -191,10 +179,10 @@ loadConfigFile() {
 
     error_flag=false
     #Check 'Speed' values and their associated temperature range and assign to local arrays
-    while read line; do
-        read s l h <<<$(echo ${line})
-        if [ $( isNumber ${s} ) = "true" ] && [ $( isNumber ${l} ) = "true" ] && [ $( isNumber ${h} ) = "true" ]; then
-            if [ ${l} -lt ${h} ]; then
+    while read -r line; do
+        read -r s l h <<< "${line}"
+        if [ "$(isNumber "${s}")" = "true" ] && [ "$(isNumber "${l}")" = "true" ] && [ "$(isNumber "${h}")" = "true" ]; then
+            if [ "${l}" -lt "${h}" ]; then
                 speed+=("$s")
                 range+=("$l $h")
             else
@@ -205,7 +193,7 @@ loadConfigFile() {
             error_flag=true
             logMsg 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): [BAD] $s : $l to $h -> invalid value(s)."
         fi
-    done <<< ${speed_values}
+    done <<< "${speed_values}"
 
     #Check error flag and load up default values for speed/range
     if [ "$error_flag" = true ]; then
@@ -214,9 +202,9 @@ loadConfigFile() {
         sendToLog 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): Found problem(s) with Speed-Temp value(s) in config file. Fallen back on defaults."
         printMsg 1 "Config file ($CONFIG_DIRECTORY/$CONFIG_FILE): Found problem(s) with Speed-Temp value(s) in config file. Fallen back on defaults."
         i=0
-        while [ "x${DEFAULT_RANGE[i]}" != "x" ]; do
-            read s <<<$(echo ${DEFAULT_SPEED[$i]})
-            read l h <<<$(echo ${DEFAULT_RANGE[$i]})
+        while [ "${DEFAULT_RANGE[i]}" != "" ]; do
+            read -r s <<< "${DEFAULT_SPEED[$i]}"
+            read -r l h <<< "${DEFAULT_RANGE[$i]}"
             speed+=("$s")
             range+=("$l $h")
             i=$((i+1))
@@ -252,15 +240,15 @@ checkGPU() {
 # Kills all 'nvfan' running processes that are not this instance #
 ##################################################################
 killProcesses() {
-    pids=`/bin/ps -fu ${USER}| awk '/nvfan/ && /-a/ && !/awk/ && !/grep/ {print $2 " " $3}'`
+    pids=$(/bin/ps -fu "${USER}" | awk '/nvfan/ && /-a/ && !/awk/ && !/grep/ {print $2 " " $3}')
 
-    if [ $(echo ${#pids}) -gt 0 ]; then #Proceses to kill?
+    if [ "${#pids}" -gt 0 ]; then #Proceses to kill?
         printMsg 3 "Terminating running fan management processes..."
 
         while read -r pid ppid; do
-            if [ "${pid}" -ne "$$" ] && [ ${ppid} -ne "$$" ]; then #if not this instance (pid) or spawned by it (ppid)
+            if [ "${pid}" -ne "$$" ] && [ "${ppid}" -ne "$$" ]; then #if not this instance (pid) or spawned by it (ppid)
                 printMsg 5 "Killing nvfan process [PID: ${pid}, PPID: ${ppid}]."
-                kill ${pid}
+                kill "${pid}"
             fi
         done <<< "${pids}"
     fi
@@ -284,7 +272,7 @@ reset() {
 # @param $1 Fan speed value in %    #
 #####################################
 setCustomSpeed() {
-    temp=`nvidia-settings -q GPUCoreTemp -t | head -1`
+    temp=$(nvidia-settings -q GPUCoreTemp -t | head -1)
     logMsg 3 "[GPU: ${temp}°C] Setting GPU fan speed to $1%%."
     nvidia-settings -a "[gpu:0]/GPUFanControlState=1" -a "[fan:0]/GPUTargetFanSpeed=$1" &> /dev/null
 }
@@ -294,13 +282,13 @@ setCustomSpeed() {
 #########################################
 startPresetController() {
     while :; do
-        temp=`nvidia-settings -q GPUCoreTemp -t | head -1`
+        temp=$(nvidia-settings -q GPUCoreTemp -t | head -1)
 
         i=0
-        while [ "x${range[i]}" != "x" ]; do
-            read lo hi <<<$(echo ${range[$i]})
+        while [ "${range[i]}" != "" ]; do
+            read -r l h <<< "${range[$i]}"
 
-            if [ $temp -ge $lo -a $temp -le $hi ]; then
+            if [ "$temp" -ge "$l" ] && [ "$temp" -le "$h" ]; then
 
                 if (("${log}" == 1)); then
                     sendToLog 3 "[GPU: ${temp}°C] Setting Fan speed to ${speed[$i]}% using preset values."
@@ -316,6 +304,13 @@ startPresetController() {
     done
 }
 
+###################################################
+# Prints the current GPU temperature in degrees C #
+###################################################
+printCurrentTemperature() {
+    printf "(-) GPU: %s°C\\n" "$(nvidia-settings -q GPUCoreTemp -t | head -1)"
+}
+
 #---------------------------------------------# Main # --------------------------------------------#
 if checkGPU; then
     printMsg 1 "NVIDIA Fan speed management is not supported on this GPU."
@@ -324,7 +319,7 @@ fi
 
 #echo "Current nvfan PID: $$"
 
-while getopts "ahs:r" opt; do
+while getopts "ahs:tr" opt; do
     case $opt in
         a)  killProcesses
             if [ "$(checkConfigFile)" = "false" ]; then
@@ -339,32 +334,35 @@ while getopts "ahs:r" opt; do
             exit 0
             ;;
         s)  killProcesses
-            if (($OPTARG > 100)); then
+            if ((OPTARG > 100)); then
                 printMsg 1 "Speed must be between 0-100%%"
                 exit 1
-            elif (($OPTARG >= 50)); then
+            elif ((OPTARG >= 50)); then
                 printMsg 3 "Setting fan speed to $OPTARG%%"
-                setCustomSpeed $OPTARG
+                setCustomSpeed "$OPTARG"
                 exit 0
-            elif (($OPTARG > 30)); then
+            elif ((OPTARG > 30)); then
                 printMsg 2 "Setting fan speed to $OPTARG%%"
-                setCustomSpeed $OPTARG
+                setCustomSpeed "$OPTARG"
                 exit 0
-            elif (($OPTARG > 0)); then
+            elif ((OPTARG > 0)); then
                 printMsg 2 "Setting fan speed to $OPTARG%% ${RED}Danger!${RESET}"
-                setCustomSpeed $OPTARG
+                setCustomSpeed "$OPTARG"
                 exit 0
-            elif (($OPTARG <= 0)) ; then
+            elif ((OPTARG <= 0)) ; then
                 printMsg 2 "${RED}Turning off the fan. Not recommended!${RESET}"
-                setCustomSpeed $OPTARG
+                setCustomSpeed "$OPTARG"
                 exit 0
             fi
+            ;;
+        t)  printCurrentTemperature
+            exit 0
             ;;
         r)  killProcesses
             reset
             exit $?
             ;;
-        \?) printMsg 1 "Invalid option: -$OPTARG"
+        \?) printMsg 1 "Invalid option: $OPTARG"
             exit 1
             ;;
         :)  printMsg 1 "Option -$OPTARG requires an argument."
@@ -373,7 +371,7 @@ while getopts "ahs:r" opt; do
     esac
 done
 
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 
 usage
 exit 0
