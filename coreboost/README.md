@@ -1,7 +1,7 @@
 # Coreboost
 
 Coreboost consists of:
-1. A shell script file that disables the CPU's turbo boost functionality,
+1. A shell script file that enables/disables the CPU's turbo boost functionality,
 2. A `systemd` service file that runs the script on startup and suspend resume,
 3. Installer and uninstaller scripts.
 
@@ -9,11 +9,23 @@ Coreboost consists of:
 
 To install run the installer script, `sudo install.sh`, from the `coreboost/` directory.
 
+On install Turbo Boost will be disabled.
+
+#### Usage
+
+Run `coreboost` from the console.
+
+    Options:
+      -e  Enable Turbo Boost
+      -d  Disable Turbo Boost
+      -h  Usage help.
+      -s  Prints the TurboBoost status of all the cores.
+
 #### Uninstalling
 
 Just run the uninstaller script, `sudo uninstall.sh`, from the `coreboost/` directory.
 
-On next restart/resume the turbo boost will be re-enabled again.
+Turbo Boost will be re-enabled again.
 
 #### Dependencies
 

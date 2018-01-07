@@ -60,7 +60,7 @@ fan at temperature range from `f` to `c`°C. For example:
 > ```
 
 _With bad settings you can fry your card so be careful and always keep an eye
-on ou GPU temps (desktop monitor with warnings/critical temp. shutdown safety 
+on your GPU temps (desktop monitor with warnings/critical temp. shutdown safety 
 is a good idea)._
 
 #### Dependencies

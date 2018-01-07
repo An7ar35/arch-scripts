@@ -1,10 +1,12 @@
 [Unit]
-Description=Intel CPU Turbo-Boost disabler
+Description=Intel CPU Turbo-Boost Disabler/Enabler
 After=multi-user.target suspend.target 
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/coreboost.sh
+ExecStart=/usr/bin/coreboost -d
+ExecStop=/usr/bin/coreboost -e
+RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target sleep.target
