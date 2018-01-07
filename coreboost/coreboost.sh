@@ -23,10 +23,10 @@ printUsage () {
 # Prints the TurboBoost status for all cores #
 ##############################################
 printCoreStatus() {
-    cores=$(cat /proc/cpuinfo | grep processor | awk '{print $3}')
+    cores=$(grep processor < /proc/cpuinfo | awk '{print $3}')
     echo "TurboBoost status:"
     for core in ${cores}; do
-        state=$(sudo rdmsr -p${core} 0x1a0 -f 38:38)
+        state=$(sudo rdmsr -p "${core}" 0x1a0 -f 38:38)
         if [[ $state -eq 1 ]]; then
             echo "Core ${core}: disabled."
         else
@@ -41,7 +41,7 @@ printCoreStatus() {
 #           0=off           #
 #############################
 switchTurboBoost() {
-    cores=$(cat /proc/cpuinfo | grep processor | awk '{print $3}')
+    cores=$(grep processor < /proc/cpuinfo | awk '{print $3}')
 
     enabled_count=0;
     disabled_count=0;
@@ -50,21 +50,21 @@ switchTurboBoost() {
     for core in ${cores}; do
         ((core_count++))
 
-        if [ $1 -eq 0 ]; then
-            sudo wrmsr -p${core} 0x1a0 0x4000850089
+        if [ "$1" -eq 0 ]; then
+            sudo wrmsr -p "${core}" 0x1a0 0x4000850089
         else
-            sudo wrmsr -p${core} 0x1a0 0x850089
+            sudo wrmsr -p "${core}" 0x1a0 0x850089
         fi
 
-        state=$(sudo rdmsr -p${core} 0x1a0 -f 38:38)
-        if [[ $state -eq 1 ]]; then
+        state=$(sudo rdmsr -p "${core}" 0x1a0 -f 38:38)
+        if [[ "$state" -eq 1 ]]; then
             ((enabled_count++))
         else
             ((disabled_count++))
         fi
     done
 
-    if [ $1 -eq 0 ]; then
+    if [ "$1" -eq 0 ]; then
         echo "CPU turbo boost disabled on ${disabled_count}/${core_count} cores." | systemd-cat -t coreboost -p info
     else
         echo "CPU turbo boost enabled on ${enabled_count}/${core_count} cores." | systemd-cat -t coreboost -p info
@@ -104,7 +104,7 @@ while getopts "dehs" opt; do
     esac
 done
 
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 
 printUsage
 exit 0
