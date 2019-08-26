@@ -66,6 +66,12 @@ is a good idea)._
 #### Dependencies
 
 Currently only support the proprietary NVIDIA linux driver (with `nvidia-settings`).
+
+If the script doesn't work you might need to enable fan speeds in the nvidia app by doing the following in the console and then restarting:
+```
+    sudo nvidia-xconfig
+    sudo nvidia-xconfig --cool-bits=4
+```
  
 At some point when I get some time I might add the 'Nouveau' driver support with some auto-detection. 
 
